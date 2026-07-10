@@ -1,12 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDB = require('./config/db'); // Phase 2: import DB connection
 
-// Load environment variables from .env file
+// Load environment variables FIRST — before anything else
+// If this line comes after, process.env.MONGO_URI would be undefined
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ========================
+// Connect to MongoDB Atlas
+// ========================
+// We connect first, then start the server
+// This ensures the API never accepts requests without a working database
+connectDB();
 
 // ========================
 // Middleware
@@ -25,12 +34,12 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 // ========================
 
-// Health Check Route — used to confirm the server is running
-// In production, tools like Render use this to verify the server is alive
+// Health Check Route — confirms server AND database are set up
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Expense Tracker Pro API is running',
+    database: 'MongoDB Atlas Connected',
     timestamp: new Date().toISOString(),
   });
 });
