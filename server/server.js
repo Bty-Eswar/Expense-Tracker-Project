@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db'); // Phase 2: import DB connection
+const connectDB = require('./config/db');
+
+// Import Routes
+const authRoutes = require('./routes/authRoutes'); // Phase 3
 
 // Load environment variables FIRST — before anything else
-// If this line comes after, process.env.MONGO_URI would be undefined
 dotenv.config();
 
 const app = express();
@@ -13,15 +15,13 @@ const PORT = process.env.PORT || 5000;
 // ========================
 // Connect to MongoDB Atlas
 // ========================
-// We connect first, then start the server
-// This ensures the API never accepts requests without a working database
 connectDB();
 
 // ========================
 // Middleware
 // ========================
 
-// Enable CORS — allows our React frontend (port 5173) to talk to this server (port 5000)
+// Enable CORS — allows our React frontend (port 5173) to talk to this server
 app.use(cors());
 
 // Parse incoming JSON request bodies
@@ -31,10 +31,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ========================
-// Routes
+// API Routes
 // ========================
 
-// Health Check Route — confirms server AND database are set up
+// Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -44,8 +44,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Auth Routes — /api/auth/register, /api/auth/login
+app.use('/api/auth', authRoutes);
+
 // ========================
-// 404 Handler — catches any undefined routes
+// 404 Handler
 // ========================
 app.use((req, res) => {
   res.status(404).json({
