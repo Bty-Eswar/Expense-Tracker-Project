@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ExpenseProvider } from './context/ExpenseContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 // Pages
-import LoginPage    from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import LoginPage     from './pages/LoginPage';
+import RegisterPage  from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ExpensesPage  from './pages/ExpensesPage';
 
 /**
  * App — Root Component
@@ -26,27 +28,23 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+        <ExpenseProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Public routes */}
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute><DashboardPage /></ProtectedRoute>
+            } />
 
-          {/* Protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route path="/expenses" element={
+              <ProtectedRoute><ExpensesPage /></ProtectedRoute>
+            } />
 
-          {/* Catch-all: unknown routes → login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </ExpenseProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
 // Import Routes
-const authRoutes = require('./routes/authRoutes'); // Phase 3
+const authRoutes    = require('./routes/authRoutes');    // Phase 3
+const expenseRoutes = require('./routes/expenseRoutes'); // Phase 5
 
 // Load environment variables FIRST — before anything else
 dotenv.config();
@@ -45,7 +46,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Auth Routes — /api/auth/register, /api/auth/login
-app.use('/api/auth', authRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/expenses', expenseRoutes); // Phase 5
 
 // ========================
 // 404 Handler
