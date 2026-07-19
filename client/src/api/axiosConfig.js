@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Build: v1.1 — production API URL baked in via Vercel env vars
-
+/**
  * Axios Instance: API
  *
  * Why create a custom instance instead of using axios directly?
@@ -10,10 +9,10 @@ import axios from 'axios';
  * - One place to handle global API settings
  *
  * baseURL logic:
- * - Development: VITE_API_URL=http://localhost:5000 → calls Express directly
- * - Production:  VITE_API_URL=https://your-render-url.com → calls deployed backend
+ * - Development: Vite proxy forwards /api → http://localhost:5000
+ * - Production:  VITE_API_URL env var set in Vercel dashboard
  * - We append '/api' so every call only needs the endpoint path:
- *   API.post('/auth/login') → http://localhost:5000/api/auth/login
+ *   API.post('/auth/login') → https://render-url.com/api/auth/login
  */
 const API = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`,
