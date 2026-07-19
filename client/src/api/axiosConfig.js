@@ -3,19 +3,24 @@ import axios from 'axios';
 /**
  * Axios Instance: API
  *
- * Why create a custom instance instead of using axios directly?
- * - Set a base URL once — all API calls use it automatically
- * - Attach the JWT token to every request via an interceptor
- * - One place to handle global API settings
+ * URL Strategy:
+ * - Development (npm run dev): import.meta.env.DEV = true
+ *   → baseURL = '/api'
+ *   → Vite proxy forwards /api → http://localhost:5000
  *
- * baseURL logic:
- * - Development: Vite proxy forwards /api → http://localhost:5000
- * - Production:  VITE_API_URL env var set in Vercel dashboard
- * - We append '/api' so every call only needs the endpoint path:
- *   API.post('/auth/login') → https://render-url.com/api/auth/login
+ * - Production (Vercel build): import.meta.env.DEV = false
+ *   → baseURL = 'https://expense-tracker-project-2trx.onrender.com/api'
+ *   → Calls Render backend directly
+ *
+ * This avoids needing any environment variables on Vercel.
+ * import.meta.env.DEV is a Vite built-in — always correct.
  */
+const BASE_URL = import.meta.env.DEV
+  ? ''                                                        // dev: Vite proxy handles /api
+  : 'https://expense-tracker-project-2trx.onrender.com';     // production: Render URL
+
 const API = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`,
+  baseURL: `${BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
