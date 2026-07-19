@@ -22,8 +22,32 @@ connectDB();
 // Middleware
 // ========================
 
-// Enable CORS — allows our React frontend (port 5173) to talk to this server
-app.use(cors());
+/**
+ * CORS Configuration — Production Ready
+ *
+ * In development: allows localhost:5173 and localhost:5174
+ * In production:  allows the Vercel frontend URL via CLIENT_URL env variable
+ *
+ * filter(Boolean) removes undefined/null if CLIENT_URL is not set
+ */
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: Origin ${origin} not allowed`));
+    }
+  },
+  credentials: true, // allow cookies / Authorization headers
+}));
 
 // Parse incoming JSON request bodies
 app.use(express.json());
