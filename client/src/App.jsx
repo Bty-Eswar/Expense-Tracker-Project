@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
+import { IncomeProvider } from './context/IncomeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 // Pages
@@ -8,6 +9,7 @@ import LoginPage     from './pages/LoginPage';
 import RegisterPage  from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ExpensesPage  from './pages/ExpensesPage';
+import IncomePage    from './pages/IncomePage';
 
 /**
  * App — Root Component
@@ -29,21 +31,27 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ExpenseProvider>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login"    element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+          <IncomeProvider>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login"    element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            <Route path="/dashboard" element={
-              <ProtectedRoute><DashboardPage /></ProtectedRoute>
-            } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute><DashboardPage /></ProtectedRoute>
+              } />
 
-            <Route path="/expenses" element={
-              <ProtectedRoute><ExpensesPage /></ProtectedRoute>
-            } />
+              <Route path="/expenses" element={
+                <ProtectedRoute><ExpensesPage /></ProtectedRoute>
+              } />
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
+              <Route path="/income" element={
+                <ProtectedRoute><IncomePage /></ProtectedRoute>
+              } />
+
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </IncomeProvider>
         </ExpenseProvider>
       </AuthProvider>
     </BrowserRouter>
@@ -51,3 +59,4 @@ function App() {
 }
 
 export default App;
+

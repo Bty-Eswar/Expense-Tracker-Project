@@ -4,6 +4,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
+import { useIncomes } from '../context/IncomeContext';
 
 // Matches ExpenseCard styles — single source of truth for category colors
 const CATEGORY_STYLES = {
@@ -20,33 +21,48 @@ const CATEGORY_STYLES = {
 /**
  * DashboardPage
  *
- * Reads from ExpenseContext (shared state).
- * If user lands here before visiting /expenses, fetchExpenses() is called.
- * All stats are computed from the expenses array — zero extra API calls.
+ * Consumes global states for Expenses and Incomes.
+ * Computes all dashboard statistics dynamically in the client.
  */
 const DashboardPage = () => {
-  const { user }                                          = useAuth();
-  const { expenses, loading, fetchExpenses, totalExpenses } = useExpenses();
+  const { user } = useAuth();
+  const { expenses, loading: expenseLoading, fetchExpenses, totalExpenses } = useExpenses();
+  const { incomes, loading: incomeLoading, fetchIncomes, totalIncome } = useIncomes();
   const navigate = useNavigate();
 
-  // Fetch expenses when dashboard mounts (in case user skipped /expenses)
+  // Combine loading status
+  const loading = expenseLoading || incomeLoading;
+
+  // Fetch both expenses and incomes when dashboard mounts
   useEffect(() => {
     fetchExpenses();
-  }, [fetchExpenses]);
+    fetchIncomes();
+  }, [fetchExpenses, fetchIncomes]);
 
   /**
-   * useMemo: compute stats only when expenses array changes
-   * Without this, these calculations run on EVERY render — wasteful
+   * useMemo: compute stats only when either expenses or incomes change
    */
   const stats = useMemo(() => {
     const now = new Date();
 
     // This month's expenses
-    const thisMonth = expenses.filter((e) => {
+    const thisMonthExpenses = expenses.filter((e) => {
       const d = new Date(e.date);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
-    const thisMonthTotal = thisMonth.reduce((sum, e) => sum + e.amount, 0);
+    const thisMonthExpenseTotal = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+    // This month's incomes
+    const thisMonthIncomes = incomes.filter((inc) => {
+      const d = new Date(inc.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const thisMonthIncomeTotal = thisMonthIncomes.reduce((sum, inc) => sum + inc.amount, 0);
+
+    // This month's savings rate: ((income - expense) / income) * 100
+    const thisMonthSavingsRate = thisMonthIncomeTotal > 0
+      ? Math.round(((thisMonthIncomeTotal - thisMonthExpenseTotal) / thisMonthIncomeTotal) * 100)
+      : 0;
 
     // Spending grouped by category
     const byCategory = expenses.reduce((acc, e) => {
@@ -64,20 +80,38 @@ const DashboardPage = () => {
     // Max amount for relative bar width calculation
     const maxCategoryAmount = sortedCategories[0]?.[1] || 1;
 
-    // Recent 5 expenses (array is already sorted newest-first)
+    // Recent 5 expenses
     const recentExpenses = expenses.slice(0, 5);
 
     return {
-      thisMonthTotal,
+      thisMonthExpenseTotal,
+      thisMonthIncomeTotal,
+      thisMonthSavingsRate,
       byCategory: sortedCategories,
       topCategory,
       maxCategoryAmount,
       recentExpenses,
     };
-  }, [expenses]);
+  }, [expenses, incomes]);
 
-  // Summary stat cards data
+  const netBalance = totalIncome - totalExpenses;
+
+  // Summary stats data cards
   const statCards = [
+    {
+      label:   'Net Balance',
+      value:   `₹${netBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      icon:    netBalance >= 0 ? '📈' : '📉',
+      color:   netBalance >= 0 ? '#10b981' : '#ef4444',
+      sub:     'Net savings all time',
+    },
+    {
+      label:   'Total Income',
+      value:   `₹${totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      icon:    '💰',
+      color:   '#10b981',
+      sub:     `${incomes.length} transactions`,
+    },
     {
       label:   'Total Spent',
       value:   `₹${totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
@@ -86,29 +120,11 @@ const DashboardPage = () => {
       sub:     `${expenses.length} transactions`,
     },
     {
-      label:   'This Month',
-      value:   `₹${stats.thisMonthTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-      icon:    '📅',
+      label:   'Savings Rate',
+      value:   `${stats.thisMonthSavingsRate}%`,
+      icon:    '🎯',
       color:   '#a78bfa',
-      sub:     new Date().toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
-    },
-    {
-      label:   'Transactions',
-      value:   expenses.length,
-      icon:    '🧾',
-      color:   '#60a5fa',
-      sub:     'All time',
-    },
-    {
-      label:   'Top Category',
-      value:   stats.topCategory
-                 ? `${CATEGORY_STYLES[stats.topCategory[0]]?.icon} ${stats.topCategory[0]}`
-                 : '—',
-      icon:    '🏆',
-      color:   '#10b981',
-      sub:     stats.topCategory
-                 ? `₹${stats.topCategory[1].toLocaleString('en-IN')} spent`
-                 : 'No data yet',
+      sub:     `This month (${new Date().toLocaleString('en-IN', { month: 'short' })})`,
     },
   ];
 
@@ -121,7 +137,7 @@ const DashboardPage = () => {
 
         <main className="animate-fade-in" style={{ padding: '5.5rem 1.75rem 2rem' }}>
 
-          {/* Welcome */}
+          {/* Welcome Header */}
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f1f5f9' }}>
               Good day, {user?.name?.split(' ')[0]}! 👋
@@ -131,8 +147,8 @@ const DashboardPage = () => {
             </p>
           </div>
 
-          {/* Loading State */}
-          {loading && expenses.length === 0 ? (
+          {/* Loading state */}
+          {loading && expenses.length === 0 && incomes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
               <div style={{
                 width: '40px', height: '40px',
@@ -144,7 +160,7 @@ const DashboardPage = () => {
             </div>
           ) : (
             <>
-              {/* ── Stat Cards ──────────────────────────────── */}
+              {/* Stat Cards Grid */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
@@ -171,23 +187,23 @@ const DashboardPage = () => {
                         border: `1px solid ${card.color}30`,
                         borderRadius: '0.625rem',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.2rem', flexShrink: 0,
+                        fontSize: '1.2,rem', flexShrink: 0,
                       }}>
-                        {card.icon}
+                        <span style={{ fontSize: '1.2rem' }}>{card.icon}</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* ── Bottom Grid: Category Breakdown + Recent Expenses ── */}
+              {/* Bottom breakdown cards */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '1rem',
               }}>
 
-                {/* Category Breakdown */}
+                {/* Category breakdown progress bars */}
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                   <h3 style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
                     💰 Spending by Category
@@ -207,7 +223,6 @@ const DashboardPage = () => {
 
                         return (
                           <div key={category}>
-                            {/* Label Row */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '1rem' }}>{style.icon}</span>
@@ -222,7 +237,6 @@ const DashboardPage = () => {
                                 </span>
                               </div>
                             </div>
-                            {/* Progress Bar */}
                             <div style={{
                               height: '6px', borderRadius: '99px',
                               background: 'rgba(255,255,255,0.06)',
@@ -241,7 +255,7 @@ const DashboardPage = () => {
                   )}
                 </div>
 
-                {/* Recent Expenses */}
+                {/* Recent expenses listing */}
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                     <h3 style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 600 }}>
@@ -281,7 +295,6 @@ const DashboardPage = () => {
                             border: '1px solid rgba(255,255,255,0.06)',
                             borderRadius: '0.625rem',
                           }}>
-                            {/* Icon */}
                             <div style={{
                               width: '36px', height: '36px', flexShrink: 0,
                               background: `${style.color}18`,
@@ -292,8 +305,6 @@ const DashboardPage = () => {
                             }}>
                               {style.icon}
                             </div>
-
-                            {/* Title + date */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p style={{
                                 color: '#e2e8f0', fontSize: '0.875rem', fontWeight: 600,
@@ -305,8 +316,6 @@ const DashboardPage = () => {
                                 {date} · {exp.category}
                               </p>
                             </div>
-
-                            {/* Amount */}
                             <p style={{ color: '#f87171', fontSize: '0.9rem', fontWeight: 700, flexShrink: 0 }}>
                               −₹{exp.amount.toLocaleString('en-IN')}
                             </p>
