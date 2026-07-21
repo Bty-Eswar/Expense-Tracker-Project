@@ -5,26 +5,17 @@ import { IncomeProvider } from './context/IncomeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 // Pages
-import LoginPage     from './pages/LoginPage';
-import RegisterPage  from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import ExpensesPage  from './pages/ExpensesPage';
-import IncomePage    from './pages/IncomePage';
+import LoginPage      from './pages/LoginPage';
+import RegisterPage   from './pages/RegisterPage';
+import DashboardPage  from './pages/DashboardPage';
+import ExpensesPage   from './pages/ExpensesPage';
+import IncomePage     from './pages/IncomePage';
+import AnalyticsPage  from './pages/AnalyticsPage';
+import CategoriesPage from './pages/CategoriesPage';
+import SettingsPage   from './pages/SettingsPage';
 
 /**
  * App — Root Component
- *
- * Wraps the entire app in:
- * 1. BrowserRouter  → enables client-side routing
- * 2. AuthProvider   → provides global auth state to all components
- *
- * Route structure:
- * /            → redirect to /login
- * /login       → LoginPage    (public)
- * /register    → RegisterPage (public)
- * /dashboard   → DashboardPage (protected — requires login)
- *
- * Any route not defined → redirect to /login
  */
 function App() {
   return (
@@ -49,6 +40,18 @@ function App() {
                 <ProtectedRoute><IncomePage /></ProtectedRoute>
               } />
 
+              <Route path="/analytics" element={
+                <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
+              } />
+
+              <Route path="/categories" element={
+                <ProtectedRoute><CategoriesPage /></ProtectedRoute>
+              } />
+
+              <Route path="/settings" element={
+                <ProtectedRoute><SettingsPage /></ProtectedRoute>
+              } />
+
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </IncomeProvider>
@@ -59,4 +62,3 @@ function App() {
 }
 
 export default App;
-

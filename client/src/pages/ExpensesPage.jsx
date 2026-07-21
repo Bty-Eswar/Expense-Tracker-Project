@@ -9,48 +9,35 @@ const CATEGORIES = ['All', 'Food', 'Transport', 'Shopping', 'Entertainment', 'He
 
 /**
  * ExpensesPage
- *
- * Main page for managing expenses.
- * Features:
- * - List all expenses (newest first)
- * - Filter by category
- * - Add new expense via modal
- * - Edit existing expense via modal
- * - Delete expense with confirmation
- * - Summary totals at the top
  */
 const ExpensesPage = () => {
   const { expenses, loading, error, totalExpenses, fetchExpenses } = useExpenses();
 
+  const [mobileOpen, setMobileOpen]   = useState(false);
   const [isFormOpen, setIsFormOpen]   = useState(false);
-  const [editExpense, setEditExpense] = useState(null);   // null = Add mode
+  const [editExpense, setEditExpense] = useState(null);
   const [filterCat, setFilterCat]     = useState('All');
   const [searchTerm, setSearchTerm]   = useState('');
 
-  // Fetch expenses when page loads
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  // Handle edit button click
   const handleEdit = (expense) => {
     setEditExpense(expense);
     setIsFormOpen(true);
   };
 
-  // Handle Add button click
   const handleAddNew = () => {
-    setEditExpense(null);   // ensure Add mode
+    setEditExpense(null);
     setIsFormOpen(true);
   };
 
-  // Handle modal close
   const handleClose = () => {
     setIsFormOpen(false);
     setEditExpense(null);
   };
 
-  // Filter expenses by category and search
   const filtered = expenses.filter((exp) => {
     const matchCat    = filterCat === 'All' || exp.category === filterCat;
     const matchSearch = exp.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -60,16 +47,15 @@ const ExpensesPage = () => {
   const filteredTotal = filtered.reduce((sum, e) => sum + e.amount, 0);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a' }}>
-      <Sidebar />
+    <div className="app-container">
+      <Sidebar isMobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <div style={{ flex: 1, marginLeft: '260px' }}>
-        <Navbar title="Expenses" />
+      <div className="main-wrapper">
+        <Navbar title="Expenses" onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
-        <main className="animate-fade-in" style={{ padding: '5.5rem 1.75rem 2rem' }}>
-
+        <main className="main-content animate-fade-in">
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h2 style={{ color: '#f1f5f9', fontSize: '1.375rem', fontWeight: 700 }}>My Expenses</h2>
               <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.25rem' }}>
@@ -91,10 +77,7 @@ const ExpensesPage = () => {
           </div>
 
           {/* Summary Bar */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem', marginBottom: '1.5rem',
-          }}>
+          <div className="responsive-grid-cards">
             {[
               { label: 'Total Spent', value: `₹${totalExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, color: '#ef4444' },
               { label: 'Showing',     value: `₹${filteredTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, color: '#a78bfa' },
@@ -132,8 +115,10 @@ const ExpensesPage = () => {
                       ? 'rgba(124,58,237,0.25)'
                       : 'rgba(255,255,255,0.04)',
                     color: filterCat === cat ? '#a78bfa' : '#64748b',
-                    fontSize: '0.8125rem', fontWeight: 500,
-                    cursor: 'pointer', transition: 'all 0.2s ease',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   {cat}
@@ -142,7 +127,7 @@ const ExpensesPage = () => {
             </div>
           </div>
 
-          {/* Content */}
+          {/* List Content */}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
               <div style={{
@@ -183,7 +168,6 @@ const ExpensesPage = () => {
         </main>
       </div>
 
-      {/* Add/Edit Modal */}
       <ExpenseForm
         isOpen={isFormOpen}
         onClose={handleClose}

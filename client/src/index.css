@@ -16,19 +16,18 @@ body {
   color: #f8fafc;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* =============================================
    CUSTOM ANIMATIONS
    ============================================= */
 
-/* Fade in from nothing */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Slide up + fade in — used for forms and cards */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -40,23 +39,20 @@ body {
   }
 }
 
-/* Floating orb background animation */
 @keyframes float {
   0%, 100% { transform: translateY(0px) scale(1); }
   50%       { transform: translateY(-30px) scale(1.05); }
 }
 
-/* Pulse glow — for accent elements */
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
   50%       { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
 }
 
 /* =============================================
-   UTILITY CLASSES
+   UTILITY CLASSES & DESIGN SYSTEM
    ============================================= */
 
-/* Glassmorphism card */
 .glass-card {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
@@ -65,7 +61,6 @@ body {
   border-radius: 1rem;
 }
 
-/* Gradient text — purple to blue */
 .gradient-text {
   background: linear-gradient(135deg, #a78bfa, #60a5fa);
   -webkit-background-clip: text;
@@ -73,7 +68,6 @@ body {
   background-clip: text;
 }
 
-/* Gradient button */
 .btn-gradient {
   background: linear-gradient(135deg, #7c3aed, #2563eb);
   color: white;
@@ -100,7 +94,6 @@ body {
   transform: none;
 }
 
-/* Input field */
 .input-field {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -123,7 +116,6 @@ body {
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
-/* Floating background orb */
 .orb {
   position: absolute;
   border-radius: 50%;
@@ -133,7 +125,6 @@ body {
   z-index: 0;
 }
 
-/* Page animations */
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
@@ -142,7 +133,6 @@ body {
   animation: slideUp 0.5s ease forwards;
 }
 
-/* Sidebar nav item */
 .nav-item {
   display: flex;
   align-items: center;
@@ -168,7 +158,6 @@ body {
   border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
-/* Stat card */
 .stat-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -183,7 +172,78 @@ body {
   transform: translateY(-2px);
 }
 
-/* Scrollbar styling */
+/* =============================================
+   RESPONSIVE LAYOUT SYSTEM
+   ============================================= */
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background: #0f172a;
+  position: relative;
+}
+
+.main-wrapper {
+  flex: 1;
+  margin-left: 260px;
+  min-width: 0;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content {
+  padding: 5.5rem 1.75rem 2rem;
+}
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.responsive-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: block;
+}
+
+/* Mobile & Tablet Breakpoints (< 768px) */
+@media (max-width: 768px) {
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .main-content {
+    padding: 5rem 1rem 1.5rem !important;
+  }
+
+  .responsive-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .responsive-grid-cards {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
 import { useIncomes } from '../context/IncomeContext';
 
-// Matches ExpenseCard styles — single source of truth for category colors
 const CATEGORY_STYLES = {
   Food:          { icon: '🍔', color: '#f59e0b' },
   Transport:     { icon: '🚗', color: '#3b82f6' },
@@ -20,9 +19,6 @@ const CATEGORY_STYLES = {
 
 /**
  * DashboardPage
- *
- * Consumes global states for Expenses and Incomes.
- * Computes all dashboard statistics dynamically in the client.
  */
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -30,57 +26,41 @@ const DashboardPage = () => {
   const { incomes, loading: incomeLoading, fetchIncomes, totalIncome } = useIncomes();
   const navigate = useNavigate();
 
-  // Combine loading status
+  const [mobileOpen, setMobileOpen] = useState(false);
   const loading = expenseLoading || incomeLoading;
 
-  // Fetch both expenses and incomes when dashboard mounts
   useEffect(() => {
     fetchExpenses();
     fetchIncomes();
   }, [fetchExpenses, fetchIncomes]);
 
-  /**
-   * useMemo: compute stats only when either expenses or incomes change
-   */
   const stats = useMemo(() => {
     const now = new Date();
 
-    // This month's expenses
     const thisMonthExpenses = expenses.filter((e) => {
       const d = new Date(e.date);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     const thisMonthExpenseTotal = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // This month's incomes
     const thisMonthIncomes = incomes.filter((inc) => {
       const d = new Date(inc.date);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     const thisMonthIncomeTotal = thisMonthIncomes.reduce((sum, inc) => sum + inc.amount, 0);
 
-    // This month's savings rate: ((income - expense) / income) * 100
     const thisMonthSavingsRate = thisMonthIncomeTotal > 0
       ? Math.round(((thisMonthIncomeTotal - thisMonthExpenseTotal) / thisMonthIncomeTotal) * 100)
       : 0;
 
-    // Spending grouped by category
     const byCategory = expenses.reduce((acc, e) => {
       acc[e.category] = (acc[e.category] || 0) + e.amount;
       return acc;
     }, {});
 
-    // Sort categories by amount (highest first)
-    const sortedCategories = Object.entries(byCategory)
-      .sort((a, b) => b[1] - a[1]);
-
-    // Top spending category
+    const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
     const topCategory = sortedCategories[0] || null;
-
-    // Max amount for relative bar width calculation
     const maxCategoryAmount = sortedCategories[0]?.[1] || 1;
-
-    // Recent 5 expenses
     const recentExpenses = expenses.slice(0, 5);
 
     return {
@@ -96,7 +76,6 @@ const DashboardPage = () => {
 
   const netBalance = totalIncome - totalExpenses;
 
-  // Summary stats data cards
   const statCards = [
     {
       label:   'Net Balance',
@@ -129,15 +108,13 @@ const DashboardPage = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a' }}>
-      <Sidebar />
+    <div className="app-container">
+      <Sidebar isMobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <div style={{ flex: 1, marginLeft: '260px' }}>
-        <Navbar title="Dashboard" />
+      <div className="main-wrapper">
+        <Navbar title="Dashboard" onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
-        <main className="animate-fade-in" style={{ padding: '5.5rem 1.75rem 2rem' }}>
-
-          {/* Welcome Header */}
+        <main className="main-content animate-fade-in">
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f1f5f9' }}>
               Good day, {user?.name?.split(' ')[0]}! 👋
@@ -147,7 +124,6 @@ const DashboardPage = () => {
             </p>
           </div>
 
-          {/* Loading state */}
           {loading && expenses.length === 0 && incomes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
               <div style={{
@@ -160,13 +136,8 @@ const DashboardPage = () => {
             </div>
           ) : (
             <>
-              {/* Stat Cards Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-                gap: '1rem',
-                marginBottom: '1.5rem',
-              }}>
+              {/* Responsive Cards Grid */}
+              <div className="responsive-grid-cards">
                 {statCards.map((card) => (
                   <div key={card.label} className="stat-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -187,23 +158,17 @@ const DashboardPage = () => {
                         border: `1px solid ${card.color}30`,
                         borderRadius: '0.625rem',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.2,rem', flexShrink: 0,
+                        fontSize: '1.2rem', flexShrink: 0,
                       }}>
-                        <span style={{ fontSize: '1.2rem' }}>{card.icon}</span>
+                        <span>{card.icon}</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Bottom breakdown cards */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1rem',
-              }}>
-
-                {/* Category breakdown progress bars */}
+              {/* Bottom 2-Column Grid */}
+              <div className="responsive-grid-2">
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                   <h3 style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
                     💰 Spending by Category
@@ -237,10 +202,7 @@ const DashboardPage = () => {
                                 </span>
                               </div>
                             </div>
-                            <div style={{
-                              height: '6px', borderRadius: '99px',
-                              background: 'rgba(255,255,255,0.06)',
-                            }}>
+                            <div style={{ height: '6px', borderRadius: '99px', background: 'rgba(255,255,255,0.06)' }}>
                               <div style={{
                                 height: '100%', borderRadius: '99px',
                                 width: `${barPct}%`,
@@ -255,7 +217,6 @@ const DashboardPage = () => {
                   )}
                 </div>
 
-                {/* Recent expenses listing */}
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                     <h3 style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 600 }}>
@@ -325,7 +286,6 @@ const DashboardPage = () => {
                     </div>
                   )}
                 </div>
-
               </div>
             </>
           )}

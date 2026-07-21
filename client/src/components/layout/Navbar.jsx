@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 /**
  * Navbar
  *
- * Top navigation bar for the dashboard layout.
- * Shows a greeting on the left and the current date + user badge on the right.
- * Positioned to the right of the fixed Sidebar (marginLeft: 260px).
+ * Top navigation header.
+ * Responsive: Adjusts left positioning and shows hamburger menu button on mobile devices (<768px).
+ *
+ * @param {string}   title       - Page title
+ * @param {Function} onMenuClick - Mobile drawer toggle trigger
  */
-const Navbar = ({ title = 'Dashboard' }) => {
+const Navbar = ({ title = 'Dashboard', onMenuClick }) => {
   const { user } = useAuth();
 
   const today = new Date().toLocaleDateString('en-IN', {
@@ -22,7 +24,7 @@ const Navbar = ({ title = 'Dashboard' }) => {
       style={{
         position: 'fixed',
         top: 0,
-        left: '260px',
+        left: window.innerWidth > 768 ? '260px' : '0',
         right: 0,
         height: '64px',
         background: 'rgba(15, 23, 42, 0.9)',
@@ -35,16 +37,38 @@ const Navbar = ({ title = 'Dashboard' }) => {
         zIndex: 30,
       }}
     >
-      {/* Left: Page title */}
-      <div>
-        <h1 style={{
-          fontSize: '1.125rem',
-          fontWeight: 600,
-          color: '#f1f5f9',
-        }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>{today}</p>
+      {/* Left: Mobile Menu Toggle + Title */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Mobile Hamburger Button */}
+        <button
+          onClick={onMenuClick}
+          className="mobile-only"
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '0.5rem',
+            color: '#f1f5f9',
+            width: '36px',
+            height: '36px',
+            cursor: 'pointer',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.1rem',
+          }}
+        >
+          ☰
+        </button>
+
+        <div>
+          <h1 style={{
+            fontSize: '1.125rem',
+            fontWeight: 600,
+            color: '#f1f5f9',
+          }}>
+            {title}
+          </h1>
+          <p style={{ fontSize: '0.75rem', color: '#64748b' }}>{today}</p>
+        </div>
       </div>
 
       {/* Right: User badge */}
@@ -73,7 +97,7 @@ const Navbar = ({ title = 'Dashboard' }) => {
           {user?.name?.charAt(0).toUpperCase()}
         </div>
         <span style={{ fontSize: '0.875rem', color: '#cbd5e1', fontWeight: 500 }}>
-          {user?.name}
+          {user?.name?.split(' ')[0]}
         </span>
       </div>
     </header>

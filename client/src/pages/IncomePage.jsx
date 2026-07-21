@@ -9,19 +9,16 @@ const CATEGORIES = ['All', 'Salary', 'Freelance', 'Investment', 'Gifts', 'Refund
 
 /**
  * IncomePage
- *
- * Provides a UI dashboard to track, list, search, filter,
- * add, update, and delete income records.
  */
 const IncomePage = () => {
   const { incomes, loading, error, totalIncome, fetchIncomes } = useIncomes();
 
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editIncome, setEditIncome] = useState(null); // null = Add mode
+  const [editIncome, setEditIncome] = useState(null);
   const [filterCat, setFilterCat]   = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Automatically fetch incomes on mount
   useEffect(() => {
     fetchIncomes();
   }, [fetchIncomes]);
@@ -32,7 +29,7 @@ const IncomePage = () => {
   };
 
   const handleAddNew = () => {
-    setEditIncome(null); // Force Add mode
+    setEditIncome(null);
     setIsFormOpen(true);
   };
 
@@ -41,7 +38,6 @@ const IncomePage = () => {
     setEditIncome(null);
   };
 
-  // Perform client-side filter and search
   const filtered = incomes.filter((inc) => {
     const matchCat    = filterCat === 'All' || inc.category === filterCat;
     const matchSearch = inc.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -51,16 +47,15 @@ const IncomePage = () => {
   const filteredTotal = filtered.reduce((sum, inc) => sum + inc.amount, 0);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a' }}>
-      <Sidebar />
+    <div className="app-container">
+      <Sidebar isMobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <div style={{ flex: 1, marginLeft: '260px' }}>
-        <Navbar title="Income" />
+      <div className="main-wrapper">
+        <Navbar title="Income" onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
-        <main className="animate-fade-in" style={{ padding: '5.5rem 1.75rem 2rem' }}>
-
+        <main className="main-content animate-fade-in">
           {/* Page Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h2 style={{ color: '#f1f5f9', fontSize: '1.375rem', fontWeight: 700 }}>My Incomes</h2>
               <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.25rem' }}>
@@ -82,10 +77,7 @@ const IncomePage = () => {
           </div>
 
           {/* Quick Stats Grid */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem', marginBottom: '1.5rem',
-          }}>
+          <div className="responsive-grid-cards">
             {[
               { label: 'Total Inflow', value: `₹${totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, color: '#10b981' },
               { label: 'Selected Total', value: `₹${filteredTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, color: '#a78bfa' },
@@ -174,7 +166,6 @@ const IncomePage = () => {
         </main>
       </div>
 
-      {/* Income Modal Form */}
       <IncomeForm
         isOpen={isFormOpen}
         onClose={handleClose}
