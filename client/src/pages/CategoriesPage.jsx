@@ -192,12 +192,12 @@ const CategoriesPage = () => {
                 </label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   step="100"
                   className="input-field"
                   value={newBudgetVal}
                   onChange={(e) => setNewBudgetVal(e.target.value)}
-                  placeholder="Enter amount e.g. 12000"
+                  placeholder="Enter amount e.g. 10000"
                   required
                 />
               </div>
