@@ -4,6 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
 import { useIncomes } from '../context/IncomeContext';
+import API from '../api/axiosConfig';
 
 /**
  * SettingsPage
@@ -16,22 +17,41 @@ const SettingsPage = () => {
   const { incomes }  = useIncomes();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [passForm, setPassForm] = useState({ currentPass: '', newPass: '', confirmPass: '' });
-  const [passMsg, setPassMsg] = useState({ type: '', text: '' });
+  const [passForm, setPassForm]     = useState({ currentPass: '', newPass: '', confirmPass: '' });
+  const [passMsg, setPassMsg]       = useState({ type: '', text: '' });
+  const [loading, setLoading]       = useState(false);
 
-  const handlePassChange = (e) => {
+  const handlePassChange = async (e) => {
     e.preventDefault();
+    setPassMsg({ type: '', text: '' });
+
     if (passForm.newPass !== passForm.confirmPass) {
       setPassMsg({ type: 'error', text: 'New passwords do not match' });
       return;
     }
     if (passForm.newPass.length < 6) {
-      setPassMsg({ type: 'error', text: 'Password must be at least 6 characters' });
+      setPassMsg({ type: 'error', text: 'New password must be at least 6 characters' });
       return;
     }
 
-    setPassMsg({ type: 'success', text: 'Password updated successfully!' });
-    setPassForm({ currentPass: '', newPass: '', confirmPass: '' });
+    setLoading(true);
+
+    try {
+      const { data } = await API.put('/auth/password', {
+        currentPassword: passForm.currentPass,
+        newPassword:     passForm.newPass,
+      });
+
+      setPassMsg({ type: 'success', text: data.message || 'Password updated successfully!' });
+      setPassForm({ currentPass: '', newPass: '', confirmPass: '' });
+    } catch (err) {
+      setPassMsg({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to update password',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Export transactions as JSON file download
@@ -98,7 +118,7 @@ const SettingsPage = () => {
                 👤 User Profile
               </h3>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '50%',
                   background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
@@ -165,8 +185,16 @@ const SettingsPage = () => {
                     required
                   />
                 </div>
-                <button type="submit" className="btn-gradient" style={{ padding: '0.75rem', borderRadius: '0.625rem', marginTop: '0.5rem', fontWeight: 600 }}>
-                  Update Password
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-gradient"
+                  style={{
+                    padding: '0.75rem', borderRadius: '0.625rem', marginTop: '0.5rem',
+                    fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                  }}
+                >
+                  {loading ? 'Updating Password...' : 'Update Password'}
                 </button>
               </form>
             </div>
